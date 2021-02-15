@@ -1,0 +1,2 @@
+float_soundgen.c:24:6:fl_fill_buffer	32	static
+float_soundgen.c:41:6:fl_init_note_steps	32	static

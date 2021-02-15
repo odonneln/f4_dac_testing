@@ -1,0 +1,3 @@
+genwave.c:15:6:gen_sine	24	static
+genwave.c:25:6:gen_square	16	static
+genwave.c:33:6:gen_sawtooth	24	static

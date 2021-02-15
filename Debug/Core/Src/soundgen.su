@@ -1,0 +1,4 @@
+soundgen.c:25:6:fill_buffer	32	static
+soundgen.c:42:6:init_note_steps	32	static
+soundgen.c:51:6:HAL_I2S_TxHalfCpltCallback	16	static
+soundgen.c:58:6:HAL_I2S_TxCpltCallback	16	static
