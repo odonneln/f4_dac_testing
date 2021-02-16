@@ -33,7 +33,8 @@ void fill_buffer(uint16_t * buffer, int num_samples) {
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
-		sample /= 16; //what is the magic number here? definitely >= 4
+//		sample /= 16; //what is the magic number here? definitely >= 4
+		sample /= 32;
 		if (sample > 0xffff) sample = 0xffff;
 		buffer[i] = buffer[i+1] = sample;
 	}
