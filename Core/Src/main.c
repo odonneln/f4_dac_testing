@@ -67,6 +67,9 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+extern uint16_t wavetable[];
+extern const int TABLESIZE;
+
 extern uint16_t buffer[];
 extern const int BUFFERSIZE;
 
@@ -114,29 +117,32 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-//  gen_square();
   gen_sine();
+//  gen_square();
 //  gen_sawtooth();
   init_note_steps();
 
-//  active_notes[active_count++] = 0;
-//  active_notes[active_count++] = 87;
+//  active_notes[active_count++] = 0; //lowest
+//  active_notes[active_count++] = 87; //highest
 //  active_notes[active_count++] = 66; // DS2
-//  active_notes[active_count++] = 22;
-
-  active_notes[active_count++] = 34;
-  active_notes[active_count++] = 37;
-  active_notes[active_count++] = 41;
+  active_notes[active_count++] = 34; //
+  /*
+  active_notes[active_count++] = 37; // G min
+  active_notes[active_count++] = 41; //
   active_notes[active_count++] = 44;
-
-  active_notes[active_count++] = 46;
-  active_notes[active_count++] = 49;
-  active_notes[active_count++] = 53;
+  active_notes[active_count++] = 46; //
+  active_notes[active_count++] = 49; // G min
+  active_notes[active_count++] = 53; //
   active_notes[active_count++] = 56;
-
-
+  active_notes[active_count++] = 82;
+  active_notes[active_count++] = 22;
+  */
 
   fill_buffer(buffer, BUFFERSIZE);
+
+  HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
+  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   while (1)
@@ -147,10 +153,10 @@ int main(void)
 	  // -- for blinking the LED --
 //	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 //	  HAL_Delay(500);
-//	  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
-//		  active_count = 3;
-//	  else
-//		  active_count = 0;
+
+	  /* use pushbutton to generate sound */
+//	  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) active_count = 3;
+//	  else active_count = 0;
 	  asm("wfi");
   }
   /* USER CODE END 3 */
@@ -224,7 +230,7 @@ static void MX_I2S2_Init(void)
   /* USER CODE END I2S2_Init 1 */
   hi2s2.Instance = SPI2;
   hi2s2.Init.Mode = I2S_MODE_MASTER_TX;
-  hi2s2.Init.Standard = I2S_STANDARD_MSB;
+  hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
   hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_48K;

@@ -11,7 +11,7 @@
 
 #define BUFSIZE 2048
 const int BUFFERSIZE = BUFSIZE;
-const int TABLESIZE = 2048;
+extern int TABLESIZE;
 
 extern uint16_t wavetable[];
 uint16_t buffer[BUFSIZE];
@@ -33,9 +33,13 @@ void fill_buffer(uint16_t * buffer, int num_samples) {
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
-//		sample /= 16; //what is the magic number here? definitely >= 4
-		sample /= 32;
-		if (sample > 0xffff) sample = 0xffff;
+//		sample /= 16;
+//		sample /= 32;
+		sample /= 64;
+//		sample /= 2;
+//		if (sample > 0xffff)
+//			while(1);
+		//sample = 0xffff;
 		buffer[i] = buffer[i+1] = sample;
 	}
 }
@@ -50,9 +54,8 @@ void init_note_steps(void) {
 
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
-//	if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) {
+//	if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
 //		active_count = 0;
-//	}
 	fill_buffer(&buffer[0], BUFSIZE / 2);
 }
 
@@ -60,6 +63,11 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
+ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//	 for (int i = 1; i < active_count; i++)
+//		 active_notes[i-1] = active_notes[i];
+	 active_count--;
+ }
 /* Percoset & Stripper Joint
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (active_notes[0] == 66)
