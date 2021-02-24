@@ -13,4 +13,4 @@
 #endif /* SRC_SOUNDGEN_H_ */
 
 void init_note_steps(void);
-void fill_buffer(uint16_t * buffer, int num_samples);
+void fill_buffer(int16_t * buffer, int num_samples);

@@ -67,10 +67,10 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern uint16_t wavetable[];
+extern int16_t wavetable[];
 extern const int TABLESIZE;
 
-extern uint16_t buffer[];
+extern int16_t buffer[];
 extern const int BUFFERSIZE;
 
 extern char active_notes[];

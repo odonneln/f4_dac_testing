@@ -13,8 +13,8 @@
 const int BUFFERSIZE = BUFSIZE;
 extern int TABLESIZE;
 
-extern uint16_t wavetable[];
-uint16_t buffer[BUFSIZE];
+extern int16_t wavetable[];
+int16_t buffer[BUFSIZE];
 
 char active_notes[10];
 int active_count = 0;
@@ -22,7 +22,7 @@ int table_steps[88];
 int table_indeces[88];
 
 
-void fill_buffer(uint16_t * buffer, int num_samples) {
+void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
 	for (i = 0; i < num_samples; i+=2) {
 		sample = 0;
@@ -34,7 +34,7 @@ void fill_buffer(uint16_t * buffer, int num_samples) {
 				table_indeces[note] -= TABLESIZE << 16;
 		}
 //		sample /= 16;
-	sample /= 32;
+//		sample /= 32;
 //		sample /= 64;
 		buffer[i] = buffer[i+1] = sample;
 	}

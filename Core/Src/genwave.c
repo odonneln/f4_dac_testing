@@ -12,7 +12,7 @@
 #define N 1746
 //#define N 2048
 
-uint16_t wavetable[N];
+int16_t wavetable[N];
 const int TABLESIZE = N;
 
 void HAL_SPI_RxCpltCallback (SPI_HandleTypeDef * hspi) {
@@ -23,7 +23,7 @@ void HAL_SPI_RxCpltCallback (SPI_HandleTypeDef * hspi) {
 void gen_sine(void) {
 	int x;
 	for(x=0; x<N; x++)
-		wavetable[x] = 32767 + 32767 * sin(2 * M_PI * x / N);
+		wavetable[x] = 32767 * sin(2 * M_PI * x / N);
 }
 void gen_square(void) {
 	int x;
