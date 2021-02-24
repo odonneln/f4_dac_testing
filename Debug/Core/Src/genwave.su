@@ -1,4 +1,4 @@
-genwave.c:23:6:HAL_SPI_RxCpltCallback	16	static
-genwave.c:33:6:gen_sine	24	static
-genwave.c:39:6:gen_square	16	static
-genwave.c:47:6:gen_sawtooth	24	static
+genwave.c:18:6:HAL_SPI_RxCpltCallback	16	static
+genwave.c:23:6:gen_sine	24	static
+genwave.c:28:6:gen_square	16	static
+genwave.c:35:6:gen_sawtooth	24	static

@@ -34,12 +34,8 @@ void fill_buffer(uint16_t * buffer, int num_samples) {
 				table_indeces[note] -= TABLESIZE << 16;
 		}
 //		sample /= 16;
-//		sample /= 32;
-		sample /= 64;
-//		sample /= 2;
-//		if (sample > 0xffff)
-//			while(1);
-		//sample = 0xffff;
+	sample /= 32;
+//		sample /= 64;
 		buffer[i] = buffer[i+1] = sample;
 	}
 }
