@@ -126,7 +126,7 @@ int main(void)
 //  active_notes[active_count++] = 87; //highest
 //  active_notes[active_count++] = 66; // DS2
   active_notes[active_count++] = 34; //
-  /*
+//  /*
   active_notes[active_count++] = 37; // G min
   active_notes[active_count++] = 41; //
   active_notes[active_count++] = 44;
@@ -136,13 +136,11 @@ int main(void)
   active_notes[active_count++] = 56;
   active_notes[active_count++] = 82;
   active_notes[active_count++] = 22;
-  */
+//  */
 
   fill_buffer(buffer, BUFFERSIZE);
 
   HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
-  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   while (1)

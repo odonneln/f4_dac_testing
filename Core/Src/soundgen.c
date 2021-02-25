@@ -33,9 +33,16 @@ void fill_buffer(int16_t * buffer, int num_samples) {
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
-//		sample /= 16;
-//		sample /= 32;
-//		sample /= 64;
+
+		sample /= 16; // for easier speaker testing
+		if (active_count > 1 && active_count < 3) //this is not fine tuned yet
+			sample /= active_count;
+
+		if (sample > 0xffff / 2)
+			sample = 0xffff / 2;
+		else if (sample < - 0xffff / 2)
+			sample = - 0xffff / 2;
+
 		buffer[i] = buffer[i+1] = sample;
 	}
 }
@@ -60,9 +67,11 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 }
 
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-//	 for (int i = 1; i < active_count; i++)
-//		 active_notes[i-1] = active_notes[i];
+//	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
 	 active_count--;
+
+	 if (active_count == 3)
+		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
  }
 /* Percoset & Stripper Joint
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
