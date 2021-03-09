@@ -55,24 +55,26 @@ void init_note_steps(void) {
 	}
 }
 
-
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+void half_complete() {
 //	if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
 //		active_count = 0;
 	fill_buffer(&buffer[0], BUFSIZE / 2);
 }
 
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
+void full_complete() {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
- void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-//	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
+void button_pushed() {
 	 active_count--;
 
 	 if (active_count == 3)
 		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
- }
+}
+
+void midi_note_received(char c) {
+
+}
 /* Percoset & Stripper Joint
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (active_notes[0] == 66)

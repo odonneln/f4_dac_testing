@@ -1,5 +1,7 @@
 Debug/*
 /Debug/
+Middlewares
+USB_HOST
 
 *.*project
 *.launch

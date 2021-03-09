@@ -19,9 +19,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usbh_hid.h"
+#include "stdio.h"
 #include "soundgen.h"
 #include "genwave.h"
 /* USER CODE END Includes */
@@ -52,8 +55,6 @@ DMA_HandleTypeDef hdma_spi1_rx;
 UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_uart4_rx;
 
-HCD_HandleTypeDef hhcd_USB_OTG_FS;
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -62,11 +63,12 @@ HCD_HandleTypeDef hhcd_USB_OTG_FS;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_DAC_Init(void);
 static void MX_UART4_Init(void);
+void MX_USB_HOST_Process(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -85,9 +87,40 @@ extern int active_count;
 
 char uart_rcv_buf[1] = {0};
 
+// interrupts
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	HAL_UART_Transmit(&huart4, (uint8_t *)uart_rcv_buf, 1, HAL_MAX_DELAY);
+	//HAL_UART_Transmit(&huart4, (uint8_t *)uart_rcv_buf, 1, HAL_MAX_DELAY);
 	HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
+	//midi_note_received(*uart_rcv_buf);
+}
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+	half_complete();
+}
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
+	full_complete();
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	// multiple callbacks
+	if(GPIO_Pin == SPI_NSS_Pin) {
+		//HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
+	}
+    if(GPIO_Pin == ONBOARD_BTN_Pin)
+    	button_pushed();
+}
+
+char uart_buf[100];
+void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
+	if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD) {
+		HID_KEYBD_Info_TypeDef *KeyInfo;
+		KeyInfo = USBH_HID_GetKeybdInfo(phost);
+		char c = USBH_HID_GetASCIICode(KeyInfo);
+		if(c == '\0') return;
+		int len = sprintf(uart_buf, "%c", c);
+		HAL_UART_Transmit(&huart4, (uint8_t *)uart_buf, len, HAL_MAX_DELAY);
+	}
 }
 
 /* USER CODE END 0 */
@@ -121,11 +154,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USB_OTG_FS_HCD_Init();
   MX_I2S2_Init();
   MX_SPI1_Init();
   MX_DAC_Init();
   MX_UART4_Init();
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
   /* USER CODE END 2 */
@@ -141,27 +174,26 @@ int main(void)
 //  active_notes[active_count++] = 0; //lowest
 //  active_notes[active_count++] = 87; //highest
 //  active_notes[active_count++] = 66; // DS2
-  active_notes[active_count++] = 34; //
+ // active_notes[active_count++] = 34; //
 //  /*
-  active_notes[active_count++] = 37; // G min
-  active_notes[active_count++] = 41; //
-  active_notes[active_count++] = 44;
-  active_notes[active_count++] = 46; //
+  //active_notes[active_count++] = 37; // G min
+  //active_notes[active_count++] = 41; //
+  //active_notes[active_count++] = 44;
+  //active_notes[active_count++] = 46; //
   active_notes[active_count++] = 49; // G min
-  active_notes[active_count++] = 53; //
-  active_notes[active_count++] = 56;
-  active_notes[active_count++] = 82;
-  active_notes[active_count++] = 22;
+  //active_notes[active_count++] = 53; //
+  //active_notes[active_count++] = 56;
+  //active_notes[active_count++] = 82;
+  //active_notes[active_count++] = 22;
 //  */
 
   fill_buffer(buffer, BUFFERSIZE);
 
-  HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
-  HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
-
+  HAL_I2S_Transmit_DMA(&hi2s2, (uint16_t *)buffer, BUFFERSIZE);
   while (1)
   {
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
 	  // -- for blinking the LED --
@@ -194,7 +226,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -321,7 +353,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -366,37 +398,6 @@ static void MX_UART4_Init(void)
   /* USER CODE BEGIN UART4_Init 2 */
 
   /* USER CODE END UART4_Init 2 */
-
-}
-
-/**
-  * @brief USB_OTG_FS Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_OTG_FS_HCD_Init(void)
-{
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 0 */
-
-  /* USER CODE END USB_OTG_FS_Init 0 */
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 1 */
-
-  /* USER CODE END USB_OTG_FS_Init 1 */
-  hhcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hhcd_USB_OTG_FS.Init.Host_channels = 8;
-  hhcd_USB_OTG_FS.Init.speed = HCD_SPEED_FULL;
-  hhcd_USB_OTG_FS.Init.dma_enable = DISABLE;
-  hhcd_USB_OTG_FS.Init.phy_itface = HCD_PHY_EMBEDDED;
-  hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
-  if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USB_OTG_FS_Init 2 */
-
-  /* USER CODE END USB_OTG_FS_Init 2 */
 
 }
 
@@ -452,8 +453,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : ONBOARD_BTN_Pin SPI_NSS_Pin */
+  GPIO_InitStruct.Pin = ONBOARD_BTN_Pin|SPI_NSS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);

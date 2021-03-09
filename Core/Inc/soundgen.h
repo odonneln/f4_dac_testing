@@ -14,3 +14,8 @@
 
 void init_note_steps(void);
 void fill_buffer(int16_t * buffer, int num_samples);
+void half_complete();
+void full_complete();
+void button_pushed();
+
+void midi_note_received(char c);
