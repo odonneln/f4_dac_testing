@@ -55,14 +55,13 @@ void init_note_steps(void) {
 	}
 }
 
-
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+void half_complete() {
 //	if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
 //		active_count = 0;
 	fill_buffer(&buffer[0], BUFSIZE / 2);
 }
 
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
+void full_complete() {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
