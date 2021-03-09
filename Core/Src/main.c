@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usbh_hid.h"
 #include "soundgen.h"
 #include "genwave.h"
 /* USER CODE END Includes */
@@ -47,6 +48,8 @@ DMA_HandleTypeDef hdma_spi2_tx;
 
 SPI_HandleTypeDef hspi1;
 
+UART_HandleTypeDef huart4;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -57,6 +60,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_UART4_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
@@ -80,6 +84,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE, HAL_MAX_DELAY);
  }
 
+void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
+	if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD) {
+		HID_KEYBD_Info_TypeDef *keyInfo;
+		keyInfo = USBH_HID_GetKeybdInfo(phost);
+		char c = USBH_HID_GetASCIICode(keyInfo);
+		if(c == '\0') return;
+
+		HAL_UART_Transmit(&huart4, (uint8_t *)&c, 1, 1000);
+		midi_note_received(c);
+	}
+}
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+	half_complete();
+}
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
+	full_complete();
+}
 
 /* USER CODE END 0 */
 
@@ -115,8 +138,9 @@ int main(void)
   MX_I2S2_Init();
   MX_SPI1_Init();
   MX_USB_HOST_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-
+  //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -146,7 +170,7 @@ int main(void)
   fill_buffer(buffer, BUFFERSIZE);
 
 //  HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
-  HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
+  //HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   while (1)
   {
@@ -184,7 +208,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -285,6 +309,39 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
 
 }
 
