@@ -65,8 +65,39 @@ void full_complete() {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
-void midi_note_received(char c) {
+int note_to_int(char c) {
+	if(c < 'a' || c > 'Z') return -1; // note valid
 
+	return c;
+}
+
+void remove_note(int loc, int find) {
+	active_count--;
+	// if the note is at the end, just decrement active notes
+	if(loc == active_count) return;
+	// swap what is at the end for what is now removed
+	active_notes[loc] = active_notes[active_count];
+}
+
+void add_note(int add) {
+	// don't exceed max
+	if(active_count == 10) return;
+
+	active_notes[active_count++] = add;
+}
+
+void midi_note_received(char c) {
+	int loc = -1;
+	int find = note_to_int(c);
+	if(find == -1) return; // invalid note
+	for(int i = 0; i < active_count; i++) {
+		if(active_notes[i] == find) {
+			loc = i;
+			break;
+		}
+	}
+	if(loc == -1) add_note(find);
+	else remove_note(loc, find);
 }
 //void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 //	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
