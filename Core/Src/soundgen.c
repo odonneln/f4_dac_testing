@@ -66,13 +66,13 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
- void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 //	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
-	 active_count--;
+//	 active_count--;
+//	 if (active_count == 3)
+//		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+// }
 
-	 if (active_count == 3)
-		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
- }
 /* Percoset & Stripper Joint
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (active_notes[0] == 66)
