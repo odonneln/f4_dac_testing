@@ -65,6 +65,9 @@ void full_complete() {
 	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
 }
 
+void midi_note_received(char c) {
+
+}
 //void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 //	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
 //	 active_count--;
