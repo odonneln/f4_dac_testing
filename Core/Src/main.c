@@ -70,19 +70,24 @@ void MX_USB_HOST_Process(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern int16_t wavetable[];
+extern volatile int16_t wavetable[1746];
 extern const int TABLESIZE;
 
-extern int16_t buffer[];
+extern int16_t buffer[2048];
 extern const int BUFFERSIZE;
 
 extern char active_notes[];
 extern int active_count;
-
+int c_count = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	c_count++;
 	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE, HAL_MAX_DELAY);
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
  }
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi1) {
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+//	HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
+}
 
 void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
 	if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD) {
@@ -154,7 +159,7 @@ int main(void)
 //  active_notes[active_count++] = 0; //lowest
 //  active_notes[active_count++] = 87; //highest
 //  active_notes[active_count++] = 66; // DS2
-  active_notes[active_count++] = 34; //
+//  active_notes[active_count++] = 34; //
   /*
   active_notes[active_count++] = 37; // G min
   active_notes[active_count++] = 41; //
@@ -169,8 +174,8 @@ int main(void)
 
   fill_buffer(buffer, BUFFERSIZE);
 
-//  HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
-  //HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
+  //HAL_SPI_Receive(&hspi1, (uint8_t *) wavetable, TABLESIZE);
+  HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   while (1)
   {
@@ -297,7 +302,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -396,11 +401,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : NSS_Pin */
-  GPIO_InitStruct.Pin = NSS_Pin;
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(NSS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;

@@ -12,12 +12,14 @@
 #define N 1746
 //#define N 2048
 
-int16_t wavetable[N];
+volatile int16_t wavetable[N];
 const int TABLESIZE = N;
 
+/*
 void HAL_SPI_RxCpltCallback (SPI_HandleTypeDef * hspi) {
 	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 }
+*/
 
 /* helper functions for when wavetable can't be recvd from F4 */
 void gen_sine(void) {
