@@ -68,7 +68,7 @@ static void MX_DMA_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_UART4_Init(void);
-void MX_USB_HOST_Process(void);
+//void MX_USB_HOST_Process(void);
 static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 
 /* USER CODE BEGIN PFP */
@@ -154,7 +154,7 @@ int main(void)
   MX_DMA_Init();
   MX_I2S2_Init();
   MX_SPI1_Init();
-  MX_USB_HOST_Init();
+  //MX_USB_HOST_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
