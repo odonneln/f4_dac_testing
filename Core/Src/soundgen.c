@@ -66,9 +66,9 @@ void full_complete() {
 }
 
 int note_to_int(char c) {
-	if(c < 'a' || c > 'Z') return -1; // note valid
+	if(c < 'A' || c > 'z') return -1; // note valid
 
-	return c;
+	return c - 'A';
 }
 
 void remove_note(int loc, int find) {
