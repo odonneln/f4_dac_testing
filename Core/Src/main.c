@@ -19,13 +19,20 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_host.h"
+//#include "usb_host.h"
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "usbh_hid.h"
+#include "usbh_MIDI.h"
+#include "MIDI_application.h"
 #include "soundgen.h"
 #include "genwave.h"
+#include "adsr.h"
+
+USBH_HandleTypeDef hUSBHost; /* USB Host handle */
+
+MIDI_ApplicationTypeDef Appli_state = APPLICATION_IDLE;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,7 +68,8 @@ static void MX_DMA_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_UART4_Init(void);
-void MX_USB_HOST_Process(void);
+//void MX_USB_HOST_Process(void);
+static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 
 /* USER CODE BEGIN PFP */
 
@@ -89,6 +97,9 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi1) {
 //	HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
 }
 
+
+
+/*
 void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
 	if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD) {
 		HID_KEYBD_Info_TypeDef *keyInfo;
@@ -100,6 +111,7 @@ void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
 		midi_note_received(c);
 	}
 }
+*/
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
 	half_complete();
@@ -142,7 +154,7 @@ int main(void)
   MX_DMA_Init();
   MX_I2S2_Init();
   MX_SPI1_Init();
-  MX_USB_HOST_Init();
+  //MX_USB_HOST_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
@@ -177,12 +189,27 @@ int main(void)
   //HAL_SPI_Receive(&hspi1, (uint8_t *) wavetable, TABLESIZE);
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
+  /*## Init Host Library ################################################*/
+  	USBH_Init(&hUSBHost, USBH_UserProcess_callback, 0);
+
+  	/*## Add Supported Class ##############################################*/
+  	USBH_RegisterClass(&hUSBHost, USBH_MIDI_CLASS);
+
+  	/*## Start Host Process ###############################################*/
+  	USBH_Start(&hUSBHost);
+
   while (1)
   {
     /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
+    // MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
+	  MIDI_Application();
+
+
+	  USBH_Process(&hUSBHost);
+
 	  // -- for blinking the LED --
 //	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 //	  HAL_Delay(500);
@@ -194,7 +221,42 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+/*====================================================================================================*/
+/**
+ * @brief  User Process function callback
+ * @param  phost: Host Handle
+ * @param  id: Host Library user message ID
+ * @retval none
+ */
+static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId)
+{
+	switch (vId)
+	{
+	case HOST_USER_SELECT_CONFIGURATION:
+		break;
 
+	case HOST_USER_DISCONNECTION:
+		Appli_state = APPLICATION_DISCONNECT;
+		//BSP_LED_Off(LED_Green);
+		//BSP_LED_Off(LED_Blue);
+		break;
+
+	case HOST_USER_CLASS_ACTIVE:
+		Appli_state = APPLICATION_READY;
+		//BSP_LED_On(LED_Green);
+		//BSP_LED_Off(LED_Blue);
+		//BSP_LED_Off(LED_Red);
+		break;
+
+	case HOST_USER_CONNECTION:
+		Appli_state = APPLICATION_START;
+		//BSP_LED_On(LED_Blue);
+		break;
+
+	default:
+		break;
+	}
+}
 /**
   * @brief System Clock Configuration
   * @retval None
