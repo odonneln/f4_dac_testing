@@ -190,13 +190,16 @@ int main(void)
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   /*## Init Host Library ################################################*/
-  	USBH_Init(&hUSBHost, USBH_UserProcess_callback, 0);
+  	if (USBH_Init(&hUSBHost, USBH_UserProcess_callback, 0) != USBH_OK)
+  		Error_Handler();
 
   	/*## Add Supported Class ##############################################*/
-  	USBH_RegisterClass(&hUSBHost, USBH_MIDI_CLASS);
+  	if (USBH_RegisterClass(&hUSBHost, USBH_MIDI_CLASS) != USBH_OK)
+  		Error_Handler();
 
   	/*## Start Host Process ###############################################*/
-  	USBH_Start(&hUSBHost);
+  	if (USBH_Start(&hUSBHost) != USBH_OK)
+  		Error_Handler();
 
   while (1)
   {
@@ -217,7 +220,7 @@ int main(void)
 	  /* use pushbutton to generate sound */
 //	  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) active_count = 3;
 //	  else active_count = 0;
-	  asm("wfi");
+//	  asm("wfi");
   }
   /* USER CODE END 3 */
 }

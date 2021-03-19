@@ -25,6 +25,9 @@ int8_t notesCount = 0; // number of notes on (keys pressed)
 extern ADSR_t adsr;
 extern bool sequencerIsOn;
 
+
+UART_HandleTypeDef huart4;
+
 /* Private function prototypes -----------------------------------------------*/
 void ProcessReceivedMidiDatas(void);
 
@@ -62,6 +65,10 @@ void MIDI_Application(void)
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost)
 {
 	ProcessReceivedMidiDatas();
+
+	char c = 'R';
+	HAL_UART_Transmit(&huart4, (uint8_t *)&c, 1, 1000);
+
 	USBH_MIDI_Receive(&hUSBHost, MIDI_RX_Buffer, RX_BUFF_SIZE); // start a new reception
 }
 
