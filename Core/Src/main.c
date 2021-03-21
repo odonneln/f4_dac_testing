@@ -190,7 +190,7 @@ int main(void)
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
   /*## Init Host Library ################################################*/
-  	if (USBH_Init(&hUSBHost, USBH_UserProcess_callback, 0) != USBH_OK)
+  	if (USBH_Init(&hUSBHost, USBH_UserProcess_callback, HOST_FS) != USBH_OK)
   		Error_Handler();
 
   	/*## Add Supported Class ##############################################*/
