@@ -172,17 +172,6 @@ int main(void)
 //  active_notes[active_count++] = 87; //highest
 //  active_notes[active_count++] = 66; // DS2
 //  active_notes[active_count++] = 34; //
-  /*
-  active_notes[active_count++] = 37; // G min
-  active_notes[active_count++] = 41; //
-  active_notes[active_count++] = 44;
-  active_notes[active_count++] = 46; //
-  active_notes[active_count++] = 49; // G min
-  active_notes[active_count++] = 53; //
-  active_notes[active_count++] = 56;
-  active_notes[active_count++] = 82;
-  active_notes[active_count++] = 22;
-  */
 
   fill_buffer(buffer, BUFFERSIZE);
 
@@ -218,8 +207,6 @@ int main(void)
 //	  HAL_Delay(500);
 
 	  /* use pushbutton to generate sound */
-//	  if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)) active_count = 3;
-//	  else active_count = 0;
 //	  asm("wfi");
   }
   /* USER CODE END 3 */

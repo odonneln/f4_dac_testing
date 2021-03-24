@@ -19,3 +19,5 @@ void full_complete();
 void button_pushed();
 
 void midi_note_received(char c);
+void add_note(int add);
+void remove_note(int note);

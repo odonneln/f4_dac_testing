@@ -66,12 +66,21 @@ void full_complete() {
 }
 
 int note_to_int(char c) {
-	if(c < 'A' || c > 'z') return -1; // note valid
+	if(c < 21 || c > 21 + 87) return -1; // note valid
 
-	return c - 'A';
+	return (int)c - 21; //TODO lowest note const
 }
 
-void remove_note(int loc, int find) {
+void remove_note(int note) {
+	int loc = -1;
+	for(int i = 0; i < active_count; i++) {
+		if(active_notes[i] == note) {
+			loc = i;
+			break;
+		}
+	}
+	if (loc == -1)
+		return;
 	active_count--;
 	// if the note is at the end, just decrement active notes
 	if(loc == active_count) return;
@@ -79,11 +88,14 @@ void remove_note(int loc, int find) {
 	active_notes[loc] = active_notes[active_count];
 }
 
-void add_note(int add) {
+void add_note(int note) {
 	// don't exceed max
-	if(active_count == 10) return;
-
-	active_notes[active_count++] = add;
+	if(active_count >= 10) return;
+	for(int i = 0; i < active_count; i++) {
+		if(active_notes[i] == note)
+			return;
+	}
+	active_notes[active_count++] = note;
 }
 
 void midi_note_received(char c) {
@@ -97,22 +109,5 @@ void midi_note_received(char c) {
 		}
 	}
 	if(loc == -1) add_note(find);
-	else remove_note(loc, find);
+	else remove_note(loc);
 }
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-//	 for (int i = 1; i < active_count; i++) active_notes[i-1] = active_notes[i];
-//	 active_count--;
-//	 if (active_count == 3)
-//		 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-// }
-
-/* Percoset & Stripper Joint
- void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (active_notes[0] == 66)
-		active_notes[0] = 64;
-	else if (active_notes[0] == 64)
-		active_notes[0] = 63;
-	else
-		active_notes[0] = 66;
-}
-*/
