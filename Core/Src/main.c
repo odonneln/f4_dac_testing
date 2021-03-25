@@ -121,6 +121,43 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 	full_complete();
 }
 
+/*====================================================================================================*/
+/**
+ * @brief  User Process function callback
+ * @param  phost: Host Handle
+ * @param  id: Host Library user message ID
+ * @retval none
+ */
+static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId)
+{
+	switch (vId)
+	{
+	case HOST_USER_SELECT_CONFIGURATION:
+		break;
+
+	case HOST_USER_DISCONNECTION:
+		Appli_state = APPLICATION_DISCONNECT;
+		//BSP_LED_Off(LED_Green);
+		//BSP_LED_Off(LED_Blue);
+		break;
+
+	case HOST_USER_CLASS_ACTIVE:
+		Appli_state = APPLICATION_READY;
+		//BSP_LED_On(LED_Green);
+		//BSP_LED_Off(LED_Blue);
+		//BSP_LED_Off(LED_Red);
+		break;
+
+	case HOST_USER_CONNECTION:
+		Appli_state = APPLICATION_START;
+		//BSP_LED_On(LED_Blue);
+		break;
+
+	default:
+		break;
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -211,42 +248,7 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
-/*====================================================================================================*/
-/**
- * @brief  User Process function callback
- * @param  phost: Host Handle
- * @param  id: Host Library user message ID
- * @retval none
- */
-static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId)
-{
-	switch (vId)
-	{
-	case HOST_USER_SELECT_CONFIGURATION:
-		break;
 
-	case HOST_USER_DISCONNECTION:
-		Appli_state = APPLICATION_DISCONNECT;
-		//BSP_LED_Off(LED_Green);
-		//BSP_LED_Off(LED_Blue);
-		break;
-
-	case HOST_USER_CLASS_ACTIVE:
-		Appli_state = APPLICATION_READY;
-		//BSP_LED_On(LED_Green);
-		//BSP_LED_Off(LED_Blue);
-		//BSP_LED_Off(LED_Red);
-		break;
-
-	case HOST_USER_CONNECTION:
-		Appli_state = APPLICATION_START;
-		//BSP_LED_On(LED_Blue);
-		break;
-
-	default:
-		break;
-	}
-}
 /**
   * @brief System Clock Configuration
   * @retval None
