@@ -16,11 +16,13 @@ extern int TABLESIZE;
 extern int16_t wavetable[];
 int16_t buffer[BUFSIZE];
 
-char active_notes[10];
-int active_count = 0;
+volatile char active_notes[10];
+volatile int active_count = 0;
 int table_steps[88];
 int table_indeces[88];
 
+#include "usbh_MIDI.h"
+extern USBH_HandleTypeDef hUSBHost; /* USB Host handle */
 
 void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
@@ -56,11 +58,15 @@ void init_note_steps(void) {
 }
 
 void half_complete() {
-	fill_buffer(&buffer[0], BUFSIZE / 2);
+	fill_buffer(&buffer[0], BUFSIZE / 4);
+	USBH_Process(&hUSBHost);
+	fill_buffer(&buffer[BUFSIZE / 4], BUFSIZE / 4);
 }
 
 void full_complete() {
-	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 2);
+	fill_buffer(&buffer[BUFSIZE / 2], BUFSIZE / 4);
+	USBH_Process(&hUSBHost);
+	fill_buffer(&buffer[3 * BUFSIZE / 4], BUFSIZE / 4);
 }
 
 int note_to_int(char c) {
