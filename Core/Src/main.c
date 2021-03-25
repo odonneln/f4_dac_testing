@@ -57,7 +57,8 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
-
+int half_tx_complete = 0;
+int full_tx_complete = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,11 +114,11 @@ void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
 */
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
-	half_complete();
+	half_tx_complete = 1;
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
-	full_complete();
+	full_tx_complete = 1;
 }
 
 /*====================================================================================================*/
@@ -237,6 +238,17 @@ int main(void)
 
 
 	  USBH_Process(&hUSBHost);
+
+	  if (half_tx_complete) {
+		  half_complete();
+		  half_tx_complete = 0;
+		  USBH_Process(&hUSBHost);
+	  }
+
+	  if (full_tx_complete) {
+		  full_complete();
+		  full_tx_complete = 0;
+	  }
 
 	  // -- for blinking the LED --
 //	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
