@@ -204,11 +204,6 @@ int main(void)
 //  gen_sawtooth();
   init_note_steps();
 
-//  active_notes[active_count++] = 0; //lowest
-//  active_notes[active_count++] = 87; //highest
-//  active_notes[active_count++] = 66; // DS2
-//  active_notes[active_count++] = 34; //
-
   fill_buffer(buffer, BUFFERSIZE);
 
   //HAL_SPI_Receive(&hspi1, (uint8_t *) wavetable, TABLESIZE);

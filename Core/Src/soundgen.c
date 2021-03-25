@@ -22,14 +22,11 @@ int active_count = 0;
 int table_steps[88];
 int table_indeces[88];
 
+extern double wavetable_rms;
 
 void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
-
-	int divisor = 16; // for easier speaker testing
-	if (active_count > 1 && active_count < 3) //this is not fine tuned yet
-		divisor /= active_count;
-
+	double divisor = wavetable_rms / (23169.326506 * 0.3162278 / 2.1);
 	for (i = 0; i < num_samples; i+=2) {
 		sample = 0;
 		for (j = 0; j < active_count; j++) {
