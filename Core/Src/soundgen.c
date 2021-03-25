@@ -24,6 +24,11 @@ int table_indeces[88];
 
 void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
+
+	int divisor = 16; // for easier speaker testing
+	if (active_count > 1 && active_count < 3) //this is not fine tuned yet
+		divisor /= active_count;
+
 	for (i = 0; i < num_samples; i+=2) {
 		sample = 0;
 		for (j = 0; j < active_count; j++) {
@@ -33,16 +38,11 @@ void fill_buffer(int16_t * buffer, int num_samples) {
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
-
-		sample /= 16; // for easier speaker testing
-		if (active_count > 1 && active_count < 3) //this is not fine tuned yet
-			sample /= active_count;
-
+		sample /= divisor;
 		if (sample > 0xffff / 2)
 			sample = 0xffff / 2;
 		else if (sample < - 0xffff / 2)
 			sample = - 0xffff / 2;
-
 		buffer[i] = buffer[i+1] = sample;
 	}
 }
@@ -56,8 +56,6 @@ void init_note_steps(void) {
 }
 
 void half_complete() {
-//	if (!HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0))
-//		active_count = 0;
 	fill_buffer(&buffer[0], BUFSIZE / 2);
 }
 
