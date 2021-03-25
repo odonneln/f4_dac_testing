@@ -69,9 +69,9 @@ static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_UART4_Init(void);
 //void MX_USB_HOST_Process(void);
-static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 
 /* USER CODE BEGIN PFP */
+static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 
 /* USER CODE END PFP */
 
