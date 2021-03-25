@@ -244,7 +244,6 @@ int main(void)
 		  half_tx_complete = 0;
 		  USBH_Process(&hUSBHost);
 	  }
-
 	  if (full_tx_complete) {
 		  full_complete();
 		  full_tx_complete = 0;

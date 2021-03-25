@@ -6,8 +6,10 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include <math.h>
 #include "stm32f4xx.h"
+#include "usbh_MIDI.h"
 
 #define BUFSIZE 2048
 const int BUFFERSIZE = BUFSIZE;
@@ -17,9 +19,13 @@ extern int16_t wavetable[];
 int16_t buffer[BUFSIZE];
 
 volatile char active_notes[10];
+char active_notes_rmv[10];
+char active_notes_add[10];
 volatile int active_count = 0;
 int table_steps[88];
 int table_indeces[88];
+volatile int removing_note = 0;
+volatile int adding_note = 0;
 
 #include "usbh_MIDI.h"
 extern USBH_HandleTypeDef hUSBHost; /* USB Host handle */
@@ -75,31 +81,40 @@ int note_to_int(char c) {
 	return (int)c - 21; //TODO lowest note const
 }
 
-void remove_note(int note) {
-	int loc = -1;
-	for(int i = 0; i < active_count; i++) {
+int remove_note(int note) {
+	if(adding_note) return 0;
+	removing_note = 1;
+	int cpy = active_count;
+	int c = 0;
+	for(int i = 0; i < cpy; i++) {
 		if(active_notes[i] == note) {
-			loc = i;
-			break;
+			continue;
 		}
+		active_notes_rmv[c++] = active_notes[i];
 	}
-	if (loc == -1)
-		return;
-	active_count--;
-	// if the note is at the end, just decrement active notes
-	if(loc == active_count) return;
-	// swap what is at the end for what is now removed
-	active_notes[loc] = active_notes[active_count];
+	if(cpy != active_count) remove_note(note);
+	memcpy(active_notes, active_notes_rmv, 10);
+	active_count = c;
+	removing_note = 0;
+	return 1;
 }
 
-void add_note(int note) {
+int add_note(int note) {
 	// don't exceed max
-	if(active_count >= 10) return;
-	for(int i = 0; i < active_count; i++) {
-		if(active_notes[i] == note)
+	if(removing_note) return 0;
+	adding_note = 1;
+	int cpy = active_count;
+	if(cpy >= 10) return;
+	memcpy(active_notes_add, active_notes, 10);
+	for(int i = 0; i < cpy; i++) {
+		if(active_notes_add[i] == note)
 			return;
 	}
-	active_notes[active_count++] = note;
+	active_notes_add[cpy++] = note;
+	memcpy(active_notes, active_notes_add, 10);
+	active_count = cpy;
+	adding_note = 0;
+	return 1;
 }
 
 void midi_note_received(char c) {

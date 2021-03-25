@@ -108,9 +108,7 @@ void ProcessReceivedMidiDatas(void)
 			remove_note(note);
 		} else if ((pack.evnt0 & 0xF0) == 0x90) {
 			//note ON
-			if (pack.evnt2 == 0)
-				remove_note(note);
-			else
+			if (pack.evnt2 != 0)
 				add_note(note);
 		}
 
