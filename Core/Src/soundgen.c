@@ -9,7 +9,8 @@
 #include <math.h>
 #include "stm32f4xx.h"
 
-#define BUFSIZE 2048
+#define BUFSIZE 512
+
 const int BUFFERSIZE = BUFSIZE;
 extern int TABLESIZE;
 
