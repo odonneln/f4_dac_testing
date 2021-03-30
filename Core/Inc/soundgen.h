@@ -13,6 +13,7 @@
 #endif /* SRC_SOUNDGEN_H_ */
 
 void init_note_steps(void);
+void init_coeffs(void);
 void fill_buffer(int16_t * buffer, int num_samples);
 void half_complete();
 void full_complete();
