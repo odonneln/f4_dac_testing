@@ -15,3 +15,4 @@
 void gen_sine(void);
 void gen_square(void);
 void gen_sawtooth(void);
+void scale_wavetable(void);

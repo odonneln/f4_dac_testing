@@ -80,37 +80,23 @@ static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 extern volatile int16_t wavetable[1746];
 extern const int TABLESIZE;
 
-extern int16_t buffer[2048];
+extern int16_t buffer[];
 extern const int BUFFERSIZE;
 
 extern char active_notes[];
 extern int active_count;
 int c_count = 0;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	c_count++;
 	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE, HAL_MAX_DELAY);
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
- }
+	scale_wavetable();
+}
+
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi1) {
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 //	HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
 }
-
-
-
-/*
-void USBH_HID_EventCallback(USBH_HandleTypeDef *phost) {
-	if(USBH_HID_GetDeviceType(phost) == HID_KEYBOARD) {
-		HID_KEYBD_Info_TypeDef *keyInfo;
-		keyInfo = USBH_HID_GetKeybdInfo(phost);
-		char c = USBH_HID_GetASCIICode(keyInfo);
-		if(c == '\0') return;
-
-		HAL_UART_Transmit(&huart4, (uint8_t *)&c, 1, 1000);
-		midi_note_received(c);
-	}
-}
-*/
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
 	half_complete();
@@ -133,25 +119,15 @@ static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId)
 	{
 	case HOST_USER_SELECT_CONFIGURATION:
 		break;
-
 	case HOST_USER_DISCONNECTION:
 		Appli_state = APPLICATION_DISCONNECT;
-		//BSP_LED_Off(LED_Green);
-		//BSP_LED_Off(LED_Blue);
 		break;
-
 	case HOST_USER_CLASS_ACTIVE:
 		Appli_state = APPLICATION_READY;
-		//BSP_LED_On(LED_Green);
-		//BSP_LED_Off(LED_Blue);
-		//BSP_LED_Off(LED_Red);
 		break;
-
 	case HOST_USER_CONNECTION:
 		Appli_state = APPLICATION_START;
-		//BSP_LED_On(LED_Blue);
 		break;
-
 	default:
 		break;
 	}
@@ -199,8 +175,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  gen_sine();
-//  gen_square();
+//  gen_sine();
+  gen_square();
 //  gen_sawtooth();
   init_note_steps();
 

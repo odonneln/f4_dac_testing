@@ -9,12 +9,12 @@
 #include <math.h>
 #include "stm32f4xx.h"
 
-#define BUFSIZE 512
+#define BUFSIZE 256
 
 const int BUFFERSIZE = BUFSIZE;
 extern int TABLESIZE;
 
-extern int16_t wavetable[];
+extern volatile int16_t wavetable[];
 int16_t buffer[BUFSIZE];
 
 char active_notes[10];
@@ -26,7 +26,9 @@ extern double wavetable_rms;
 
 void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
-	double divisor = wavetable_rms / (23169.326506 * 0.3162278 / 2.1);
+
+	int divisor = 1;
+
 	for (i = 0; i < num_samples; i+=2) {
 		sample = 0;
 		for (j = 0; j < active_count; j++) {
