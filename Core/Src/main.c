@@ -179,7 +179,6 @@ int main(void)
   gen_square();
 //  gen_sawtooth();
   init_note_steps();
-  init_coeffs();
 
   fill_buffer(buffer, BUFFERSIZE);
 

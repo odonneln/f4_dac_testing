@@ -29,6 +29,7 @@ double compute_wave_RMS(void) {
 void scale_wavetable(void) {
 	wavetable_rms = compute_wave_RMS();
 	double divisor = wavetable_rms / (23169.326506 * 0.3162278 / 2.1);
+	divisor *= sqrt(10);
 	for (int i = 0; i < N; i++)
 		wavetable[i] /= divisor;
 }

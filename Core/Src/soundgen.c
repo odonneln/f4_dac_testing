@@ -21,7 +21,6 @@ char active_notes[10];
 int active_count = 0;
 int table_steps[88];
 int table_indeces[88];
-float coeffs[10];
 
 void fill_buffer(int16_t * buffer, int num_samples) {
 	int i, j, note, sample;
@@ -34,7 +33,6 @@ void fill_buffer(int16_t * buffer, int num_samples) {
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
-		sample /= coeffs[active_count - 1];
 		if (sample > 0xffff / 2)
 			sample = 0xffff / 2;
 		else if (sample < - 0xffff / 2)
@@ -49,11 +47,6 @@ void init_note_steps(void) {
 		freq = pow(1.05946309436, k - 48) * 440;
 		table_steps[k] = freq * TABLESIZE / 48000 * (1 << 16);
 	}
-}
-
-void init_coeffs(void) {
-	for (int i = 0; i < 10; i++)
-		coeffs[i] = sqrt(i+1);
 }
 
 void half_complete() {
