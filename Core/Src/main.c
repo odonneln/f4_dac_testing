@@ -179,6 +179,8 @@ int main(void)
   gen_square();
 //  gen_sawtooth();
   init_note_steps();
+//  initializeParameters(0xff, 0xff, 0x7f, 0x01); // ASDR parameters
+  initializeParameters(0xff / 9, 0xff / 9, 0x7f, 0x01);
 
   fill_buffer(buffer, BUFFERSIZE);
 
@@ -205,7 +207,6 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  MIDI_Application();
-
 
 	  USBH_Process(&hUSBHost);
 

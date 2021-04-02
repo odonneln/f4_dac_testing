@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "stm32f4xx.h"
+#include "adsr.h"
 
 #define BUFSIZE 256
 
@@ -28,11 +29,12 @@ void fill_buffer(int16_t * buffer, int num_samples) {
 		sample = 0;
 		for (j = 0; j < active_count; j++) {
 			note = active_notes[j];
-			sample += wavetable[table_indeces[note] >> 16];
+			sample += get_multiplier(note) * wavetable[table_indeces[note] >> 16];
 			table_indeces[note] += table_steps[note];
 			if ((table_indeces[note] >> 16) >= TABLESIZE)
 				table_indeces[note] -= TABLESIZE << 16;
 		}
+		sample_finished();
 		if (sample > 0xffff / 2)
 			sample = 0xffff / 2;
 		else if (sample < - 0xffff / 2)
@@ -78,6 +80,7 @@ void remove_note(int note) {
 	if(loc == active_count) return;
 	// swap what is at the end for what is now removed
 	active_notes[loc] = active_notes[active_count];
+	note_released(note);
 }
 
 void add_note(int note) {
@@ -88,18 +91,5 @@ void add_note(int note) {
 			return;
 	}
 	active_notes[active_count++] = note;
-}
-
-void midi_note_received(char c) {
-	int loc = -1;
-	int find = note_to_int(c);
-	if(find == -1) return; // invalid note
-	for(int i = 0; i < active_count; i++) {
-		if(active_notes[i] == find) {
-			loc = i;
-			break;
-		}
-	}
-	if(loc == -1) add_note(find);
-	else remove_note(loc);
+	note_pressed(note);
 }

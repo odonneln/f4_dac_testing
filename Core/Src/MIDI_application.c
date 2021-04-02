@@ -79,12 +79,6 @@ void ProcessReceivedMidiDatas(void)
 	uint8_t *ptr = MIDI_RX_Buffer;
 	midi_package_t pack;
 
-	//	if (notesCount < 0) {
-	//		BSP_LED_On(LED_Red);
-	//	} else {
-	//		BSP_LED_Off(LED_Red);
-	//	}
-
 	numberOfPackets = USBH_MIDI_GetLastReceivedDataSize(&hUSBHost) / 4; //each USB midi package is 4 bytes long
 
 	while (numberOfPackets--)
