@@ -1,207 +1,119 @@
-/**
- ******************************************************************************
- * File Name          	: adsr.c
- * Author				: Perry R. Cook and Gary P. Scavone, modified by Xavier Halgand
- * Date               	:
- * Description        	:
- ******************************************************************************
+/*
+ * adsr.c
+ *
+ *  Created on: Apr 1, 2021
+ *      Author: cooper
  */
-
-/***************************************************/
-/*
-    This Envelope subclass implements a
-    traditional ADSR (Attack, Decay,
-    Sustain, Release) envelope.  It
-    responds to simple keyOn and keyOff
-    messages, keeping track of its state.
-    The \e state = ADSR::DONE after the
-    envelope value reaches 0.0 in the
-    ADSR::RELEASE state.
-
-    by Perry R. Cook and Gary P. Scavone, 1995 - 2005.
-*/
-/*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
-/***************************************************/
 
 #include "adsr.h"
 
-/*---------------------------------------------------------------------------*/
+// time to reach max amp
+static uint8_t attack = 1;
+// time to reach sustain
+static uint8_t decay = 1;
+// sustain level is the multiplier to its amplitude
+// sustain mult = sustain/255
+static uint8_t sustain = 0xff;
+// release is being ignored rn.
+static uint8_t release = 1;
 
-//ADSR_t			adsr _CCM_;
+static long attack_sub_counter = 0;
+static long decay_sub_counter = 0;
 
-/*---------------------------------------------------------------------------*/
+static uint8_t attack_add = 0;
+static uint8_t decay_add = 0;
 
-void ADSR_init(ADSR_t *env)
-{
-  env->target_ = 0.0;
-  env->value_ = 0.0;
-  env->attackRate_ = 0.001;
-  env->decayRate_ = 0.001;
-  env->sustainLevel_ = 0.5;
-  env->releaseRate_ = 0.01;
-  env->state_ = ATTACK;
-  env->cnt_ = 0;
-  //env->gateTime_ = 10000;
+static long attack_time_scale = 1;
+static long decay_time_scale = 1;
+
+static float multiplier_table[MAX_ATTACK + 1 + MAX_DECAY + 1 + MAX_RELEASE];
+static long notes_step[NOTE_MAX - NOTE_MIN + 1] = {0};
+static enum ADSR_STATUS notes_status[NOTE_MAX - NOTE_MIN + 1] = {OFF};
+
+#ifdef TESTING_ADSR
+void p_mult(FILE * fp) {
+	fprintf(fp, "%d, %d, %d\n", attack, decay, sustain);
+	for(int i = 0; i < sizeof(multiplier_table)/sizeof(float) - 1; i++) {
+		fprintf(fp, "%f, ", multiplier_table[i]);
+	}
+
+	fprintf(fp, "%f\n", multiplier_table[sizeof(multiplier_table)/sizeof(float)]);
+}
+#endif
+
+void initializeParameters(uint8_t l_attack, uint8_t l_decay, uint8_t l_sustain, uint8_t l_release) {
+	if(l_attack >= MIN_ATTACK) attack = l_attack;
+	if(l_decay >= MIN_DECAY) decay = l_decay;
+	if(l_release >= MIN_RELEASE) release = l_release;
+	sustain = l_sustain;
+
+	int i = 0;
+	for(; i <= attack; i++) {
+		multiplier_table[i] = (float)i/(float)attack;
+	}
+
+	float fp_sustain = (float)sustain / (float)MAX_SUSTAIN;
+	int decay_time = 1;
+	for(; i <= attack + decay; i++) {
+		multiplier_table[i] = 1+ (fp_sustain - 1.0) * (decay_time++)/decay;
+	}
+
+	for(; i < sizeof(multiplier_table)/ sizeof(float); i++) {
+		multiplier_table[i] = fp_sustain;
+	}
+
+	// cant do release atm.
+	
+	attack_time_scale = (SAMPLING_FREQUENCY * 1000) * ATTACK_MAX_TIME * attack / MAX_ATTACK;
+	decay_time_scale = (SAMPLING_FREQUENCY * 1000 ) * DECAY_MAX_TIME;
 }
 
-void ADSR_keyOn(ADSR_t *env)
-{
-	env->cnt_ = 0;
-	env->target_ = 1.0f;
-	env->rate_ = 	env->attackRate_;
-	env->state_ = ATTACK;
+void note_released(uint8_t note) {
+	notes_step[note] = 0;
+	notes_status[note] = OFF;
 }
 
-void ADSR_keyOff(ADSR_t *env)
-{
-	env->cnt_ = 0;
-	env->target_ = 0.0;
-	env->rate_ = 	env->releaseRate_;
-	env->state_ = RELEASE;
+void note_pressed(uint8_t note) {
+	notes_step[note] = 0;
+	notes_status[note] = ATTACK;
 }
 
-void ADSR_setAttackRate(ADSR_t *env, float rate)
-{
-	env->attackRate_ = rate;
+void sample_finished() {
+	attack_sub_counter += 1;
+	decay_sub_counter += 1;
+
+	attack_add = attack * attack_sub_counter / attack_time_scale;
+	if(attack_add) attack_sub_counter = 0;
+
+#if ATTACK_MAX_TIME != DECAY_MAX_TIME
+	decay_add = decay * decay_sub_counter / decay_time_scale;
+	decay_sub_counter = 0;
+#endif
 }
 
-void ADSR_setDecayRate(ADSR_t *env, float rate)
-{
-	env->decayRate_ = rate;
+float get_multiplier(uint8_t note) {
+	long time = notes_step[note];
+	float mult = multiplier_table[time];
+	
+#if ATTACK_MAX_TIME == DECAY_MAX_TIME
+	if(notes_status[note] == SUSTAIN) return mult;
+	time += attack_add;
+	if(time > MAX_ATTACK + MAX_DECAY + MAX_RELEASE + 2) time = MAX_ATTACK + MAX_DECAY + MAX_RELEASE + 2;
+	notes_step[note] = time;
+	if(time > attack+decay) notes_status[note] = SUSTAIN;
+#else
+	if(notes_status[note] == ATTACK) {
+		time += attack_add;
+		if(time > attack) notes_status[note] = DECAY;
+	} else if(notes_status[note] == DECAY) {
+		time += decay_add;
+		if(time > attack + decay) notes_status[note] = SUSTAIN;
+	}
+	if(time > MAX_ATTACK + MAX_DECAY + MAX_RELEASE + 2) time = MAX_ATTACK + MAX_DECAY + MAX_RELEASE + 2;
+	// we do not increment or anything if at sustain.
+	notes_step[note] = time;
+#endif
+
+
+	return mult;
 }
-
-void ADSR_setSustainLevel(ADSR_t *env, float level)
-{
-	env->sustainLevel_ = level;
-}
-
-void ADSR_setReleaseRate(ADSR_t *env, float rate)
-{
-	env->releaseRate_ = rate;
-}
-
-void ADSR_setAttackTime(ADSR_t *env, float time)
-{
-	//env->attackRate_ = 1.0 / ( time * SAMPLERATE );
-}
-
-void ADSR_setDecayTime(ADSR_t *env, float time)
-{
-	//env->decayRate_ = 1.0 / ( time * SAMPLERATE );
-}
-
-void ADSR_setReleaseTime(ADSR_t *env, float time)
-{
-	//env->releaseRate_ = env->sustainLevel_ / ( time * SAMPLERATE );
-}
-
-void ADSR_setAllTimes(ADSR_t *env, float aTime, float dTime, float sLevel, float rTime)
-{
-  ADSR_setAttackTime(env, aTime);
-  ADSR_setDecayTime(env, dTime);
-  ADSR_setSustainLevel(env, sLevel);
-  ADSR_setReleaseTime(env, rTime);
-}
-
-void ADSR_setTarget(ADSR_t *env, float target)
-{
-	env->target_ = target;
-  if (env->value_ < env->target_) {
-	  env->state_ = ATTACK;
-	  ADSR_setSustainLevel(env, env->target_);
-    env->rate_ = env->attackRate_;
-  }
-  if (env->value_ > env->target_) {
-	  ADSR_setSustainLevel(env, env->target_);
-    env->state_ = DECAY;
-    env->rate_ = env->decayRate_;
-  }
-}
-
-void ADSR_setValue(ADSR_t *env, float value)
-{
-	env->state_ = SUSTAIN;
-	env->target_ = value;
-	env->value_ = value;
-	ADSR_setSustainLevel(env, value);
-	env->rate_ = 0.0f;
-}
-
-int ADSR_getState(ADSR_t *env)
-{
-  return env->state_;
-}
-
-void AttTime_set(uint8_t val)
-{
-	//ADSR_setAttackTime(&adsr, val/MIDI_MAX + 0.0001f);
-}
-void DecTime_set(uint8_t val)
-{
-	//ADSR_setDecayTime(&adsr, .2*val/MIDI_MAX + 0.0001f);
-}
-void SustLevel_set(uint8_t val)
-{
-	//ADSR_setSustainLevel(&adsr, val/MIDI_MAX);
-}
-void RelTime_set(uint8_t val)
-{
-	//ADSR_setReleaseTime(&adsr, .5f * val/MIDI_MAX + 0.0001f);
-}
-/*--------------------------------------------------------------------------------------*/
-float ADSR_computeSample(ADSR_t *env)
-{
-	(env->cnt_)++;
-
-	switch (env->state_) {
-
-  case ATTACK:
-	  env->value_ += env->rate_;
-    if (env->value_ >= env->target_)
-    {
-    	env->value_ = env->target_;
-    	env->rate_ = env->decayRate_;
-    	env->target_ = env->sustainLevel_;
-    	env->state_ = DECAY;
-    }
-    break;
-
-  case DECAY:
-	  env->value_ -= env->decayRate_;
-    if (env->value_ <= env->sustainLevel_)
-    {
-    	env->value_ = env->sustainLevel_;
-    	env->rate_ = 0.0f;
-    	env->state_ = SUSTAIN;
-    }
-    break;
-
-  case RELEASE:
-	  env->value_ -= env->releaseRate_;
-    if (env->value_ <= 0.0f)
-    {
-    	env->value_ =  0.0f;
-    	env->state_ = DONE;
-    }
-  }
-
-  env->lastOutput_ = env->value_;
-  return env->value_;
-}
-
-/*******************************************************   EOF   ***********************************************************/
