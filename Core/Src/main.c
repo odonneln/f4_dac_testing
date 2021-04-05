@@ -77,7 +77,7 @@ static void USBH_UserProcess_callback(USBH_HandleTypeDef *pHost, uint8_t vId);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern volatile int16_t wavetable[1746];
+extern volatile int16_t wavetable[];
 extern const int TABLESIZE;
 
 extern int16_t buffer[];
@@ -88,9 +88,20 @@ extern int active_count;
 int c_count = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin != GPIO_PIN_4) {
+		//TODO this probably isn't needed
+		//once blue pushbutton removed from device configuration
+		return;
+	}
+	// TODO clear all active notes when new waveform (or params) recv'd
 	c_count++;
-	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE, HAL_MAX_DELAY);
+	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE + 2, HAL_MAX_DELAY);
 	scale_wavetable();
+	uint8_t attack = wavetable[TABLESIZE] & 0x00ff;
+	uint8_t decay = (wavetable[TABLESIZE] & 0xff00) >> 8;
+	uint8_t sustain = wavetable[TABLESIZE + 1] & 0x00ff;
+	uint8_t release = (wavetable[TABLESIZE + 1] & 0xff00) >> 8;
+	initializeParameters(attack, decay, sustain, release);
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi1) {

@@ -12,7 +12,7 @@
 #define N 1746
 //#define N 2048
 
-volatile int16_t wavetable[N];
+volatile int16_t wavetable[N + 2];
 const int TABLESIZE = N;
 
 double wavetable_rms = 0xffff;
