@@ -41,6 +41,14 @@ void gen_sine(void) {
 		wavetable[x] = 32767 * sin(2 * M_PI * x / N);
 	scale_wavetable();
 }
+void gen_crest_sine(int exponent) {
+	if (exponent % 2 == 0)
+		exponent++;
+	int x;
+	for(x=0; x<N; x++)
+		wavetable[x] = 32767 * pow(sin(2 * M_PI * x / N), exponent);
+	scale_wavetable();
+}
 void gen_square(void) {
 	int x;
 	for(x=0; x<N/2; x++)

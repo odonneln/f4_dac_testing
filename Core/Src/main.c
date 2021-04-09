@@ -190,8 +190,12 @@ int main(void)
   gen_square();
 //  gen_sawtooth();
   init_note_steps();
-//  initializeParameters(0xff, 0xff, 0x7f, 0x01); // ASDR parameters
-  initializeParameters(0xff / 9, 0xff / 9, 0x7f, 0x01);
+  initializeParameters(
+		  0xff / 9, //attack
+		  0xff / 9, //decay
+		  0xff, //sustain = fraction of peak ampl the wave settles at after decay
+		  0x01 //release (leave as is for now)
+	);
 
   fill_buffer(buffer, BUFFERSIZE);
 
