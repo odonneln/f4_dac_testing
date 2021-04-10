@@ -15,8 +15,6 @@
 volatile int16_t wavetable[N + 2];
 const int TABLESIZE = N;
 
-double wavetable_rms = 0xffff;
-
 double compute_wave_RMS(void) {
 	double rms = 0;
 	for (int i = 0; i < N; i++)
@@ -27,11 +25,19 @@ double compute_wave_RMS(void) {
 }
 
 void scale_wavetable(void) {
-	wavetable_rms = compute_wave_RMS();
-	double divisor = wavetable_rms / (23169.326506 * 0.3162278 / 2.1);
-	divisor *= sqrt(10);
-	for (int i = 0; i < N; i++)
+	double divisor = sqrt(10) * compute_wave_RMS() / (23169.326506 * 0.3162278 / 2.1);
+	int i;
+	long max_squared = 0;
+	for (i = 0; i < N; i++) {
 		wavetable[i] /= divisor;
+		if (wavetable[i] * wavetable[i] > max_squared)
+			max_squared = wavetable[i] * wavetable[i];
+	}
+	if (sqrt(max_squared) > 3276) {
+		// clipping possible: interference of 10 notes at peak > 0xffff
+		for (i = 0; i < N; i++)
+			wavetable[i] /= sqrt(max_squared) / 3276.7;
+	}
 }
 
 /* helper functions for when wavetable can't be recvd from F4 */

@@ -187,8 +187,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 //  gen_sine();
-  gen_square();
+//  gen_square();
 //  gen_sawtooth();
+
+//    gen_crest_sine(23); //theoretical max with no clipping
+  gen_crest_sine(25);
+//  gen_crest_sine(999);
+
   init_note_steps();
   initializeParameters(
 		  0xff / 9, //attack
