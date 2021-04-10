@@ -177,7 +177,7 @@ int main(void)
   MX_DMA_Init();
   MX_I2S2_Init();
   MX_SPI1_Init();
-  //MX_USB_HOST_Init();
+//  MX_USB_HOST_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
@@ -186,12 +186,12 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-//  gen_sine();
+  gen_sine();
 //  gen_square();
 //  gen_sawtooth();
 
 //    gen_crest_sine(23); //theoretical max with no clipping
-  gen_crest_sine(25);
+//  gen_crest_sine(25);
 //  gen_crest_sine(999);
 
   init_note_steps();
@@ -222,7 +222,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    // MX_USB_HOST_Process();
+//    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
 
@@ -440,12 +440,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PA4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -460,9 +454,6 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
