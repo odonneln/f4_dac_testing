@@ -88,11 +88,6 @@ extern int active_count;
 int c_count = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin != GPIO_PIN_4) {
-		//TODO this probably isn't needed
-		//once blue pushbutton removed from device configuration
-		return;
-	}
 	// TODO clear all active notes when new waveform (or params) recv'd
 	c_count++;
 	HAL_SPI_Receive(&hspi1, wavetable, TABLESIZE + 2, HAL_MAX_DELAY);
@@ -105,7 +100,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi1) {
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 //	HAL_SPI_Receive_DMA(&hspi1, (uint8_t *) wavetable, TABLESIZE);
 }
 
@@ -225,17 +219,8 @@ int main(void)
 //    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-
 	  MIDI_Application();
-
 	  USBH_Process(&hUSBHost);
-
-	  // -- for blinking the LED --
-//	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-//	  HAL_Delay(500);
-
-	  /* use pushbutton to generate sound */
-//	  asm("wfi");
   }
   /* USER CODE END 3 */
 }
@@ -424,10 +409,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -437,13 +418,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
