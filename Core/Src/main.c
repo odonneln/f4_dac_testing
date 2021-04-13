@@ -111,6 +111,12 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 	full_complete();
 }
 
+void print(const char * c) {
+	uint8_t l = 0;
+	while (c[l++] != '\0');
+	HAL_UART_Transmit(&huart4, (uint8_t *) c, l, HAL_MAX_DELAY);
+}
+
 /*====================================================================================================*/
 /**
  * @brief  User Process function callback
@@ -175,6 +181,7 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
+  print("0\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -198,8 +205,12 @@ int main(void)
 
   fill_buffer(buffer, BUFFERSIZE);
 
+  print("1\n");
+
   //HAL_SPI_Receive(&hspi1, (uint8_t *) wavetable, TABLESIZE);
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
+
+  print("2\n");
 
   /*## Init Host Library ################################################*/
   	if (USBH_Init(&hUSBHost, USBH_UserProcess_callback, HOST_FS) != USBH_OK)
@@ -243,7 +254,7 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
