@@ -224,6 +224,8 @@ int main(void)
   	if (USBH_Start(&hUSBHost) != USBH_OK)
   		Error_Handler();
 
+  	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
+
   while (1)
   {
     /* USER CODE END WHILE */
