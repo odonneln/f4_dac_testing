@@ -26,9 +26,15 @@ static uint8_t decay_add = 0;
 static long attack_time_scale = 1;
 static long decay_time_scale = 1;
 
-static float multiplier_table[MAX_ATTACK + 1 + MAX_DECAY + 1 + MAX_RELEASE];
+static float multiplier_table[MAX_ATTACK + 1 + MAX_DECAY + 1];
 static long notes_step[NOTE_MAX - NOTE_MIN + 1] = {0};
+static long notes_released_step[NOTE_MAX - NOTE_MIN + 1] = {0};
 static enum ADSR_STATUS notes_status[NOTE_MAX - NOTE_MIN + 1] = {OFF};
+static uint8_t released_notes[MAX_RELEASE_NOTES] = {0};
+static uint8_t release_length = 0;
+static uint8_t notes_finished = 0;
+static float release_capture[NOTE_MAX - NOTE_MIN + 1] = {0};
+static float release_m_table[MAX_RELEASE];
 
 #ifdef TESTING_ADSR
 void p_mult(FILE * fp) {
@@ -43,8 +49,11 @@ void p_mult(FILE * fp) {
 
 void initializeParameters(uint8_t l_attack, uint8_t l_decay, uint8_t l_sustain, uint8_t l_release) {
 	if(l_attack >= MIN_ATTACK) attack = l_attack;
+	else attack = MIN_ATTACK;
 	if(l_decay >= MIN_DECAY) decay = l_decay;
+	else decay = MIN_DECAY;
 	if(l_release >= MIN_RELEASE) release = l_release;
+	else release = MIN_RELEASE;
 	sustain = l_sustain;
 
 	int i = 0;
@@ -62,15 +71,16 @@ void initializeParameters(uint8_t l_attack, uint8_t l_decay, uint8_t l_sustain, 
 		multiplier_table[i] = fp_sustain;
 	}
 
-	// cant do release atm.
-	
-	attack_time_scale = (SAMPLING_FREQUENCY * 1000) * ATTACK_MAX_TIME * attack / MAX_ATTACK;
-	decay_time_scale = (SAMPLING_FREQUENCY * 1000 ) * DECAY_MAX_TIME;
-}
+	for(i = 0; i < release; i++) {
+		release_m_table[i] = 1.0 - (float)i/(float)release;
+	}
+	for(; i < sizeof(release_m_table)/sizeof(float); i++) {
+		release_m_table[i] = 0;
+	}
 
-void note_released(uint8_t note) {
-	notes_step[note] = 0;
-	notes_status[note] = OFF;
+	attack_time_scale = (SAMPLING_FREQUENCY * 1000) * ATTACK_MAX_TIME * attack / MAX_ATTACK;
+	decay_time_scale = (SAMPLING_FREQUENCY * 1000 ) * DECAY_MAX_TIME * decay / MAX_DECAY;
+
 }
 
 void note_pressed(uint8_t note) {
@@ -84,6 +94,9 @@ void sample_finished() {
 
 	attack_add = attack * attack_sub_counter / attack_time_scale;
 	if(attack_add) attack_sub_counter = 0;
+
+	release_length -= notes_finished;
+	notes_finished = 0;
 
 #if ATTACK_MAX_TIME != DECAY_MAX_TIME
 	decay_add = decay * decay_sub_counter / decay_time_scale;
@@ -117,3 +130,38 @@ float get_multiplier(uint8_t note) {
 
 	return mult;
 }
+
+void note_released(uint8_t note) {
+	notes_step[note] = 0;
+	notes_status[note] = OFF;
+	for(int i = MAX_RELEASE_NOTES-1; i >= 1; i--) {
+		released_notes[i]= released_notes[i-1];
+	}
+	release_capture[note] = get_multiplier(note);
+	released_notes[0] = note;
+	note_released_step[note] = 0;
+}
+
+uint8_t get_released_count() {
+	return released_length;
+}
+
+// yeah i know this is really bad. Time crunch though
+uint8_t * get_released_array() {
+	return released_notes;
+}
+
+float get_released_mult(uint8_t note) {
+	long time = notes_released_step[note];
+	float mult = release_m_table[time] * release_capture[note];
+
+	time += attack_add;
+	notes_released_step[note] = time;
+	
+	if(time >= release) {
+		notes_released_step[note] = 0;
+		notes_finished++;
+	}
+
+}
+

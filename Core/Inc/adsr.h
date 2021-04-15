@@ -32,6 +32,7 @@
 #define MAX_DECAY 0xff
 #define MAX_SUSTAIN 0xff
 #define MAX_RELEASE 0x01
+#define MAX_RELEASE_NOTES 5
 
 // in seconds, no smaller than 1
 #define ATTACK_MAX_TIME 1
@@ -64,4 +65,8 @@ void note_released(uint8_t note);
 void note_pressed(uint8_t note);
 
 void sample_finished();
+
+uint8_t get_released_count();
+uint8_t *get_released_array();
+float get_released_mult(uint8_t note);
 #endif /* INC_ADSR_H_ */
