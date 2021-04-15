@@ -35,6 +35,11 @@ void fill_buffer(int16_t * buffer, int num_samples) {
 				table_indeces[note] -= TABLESIZE << 16;
 		}
 		sample_finished();
+		uint8_t r_count = get_released_count();
+		uint8_t *loc = get_released_array();
+		for(int f = 0; f < r_count; f++) {
+			sample += get_released_mult(loc[f]) * wavetable[table_indeces[loc[f]] >> 16];
+		}
 		if (sample > 0xffff / 2)
 			sample = 0xffff / 2;
 		else if (sample < - 0xffff / 2)
