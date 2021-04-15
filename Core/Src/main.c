@@ -200,7 +200,7 @@ int main(void)
 		  0xff / 9, //attack
 		  0xff / 9, //decay
 		  0xff, //sustain = fraction of peak ampl the wave settles at after decay
-		  0x01 //release (leave as is for now)
+		  0xff //release (leave as is for now)
 	);
 
   fill_buffer(buffer, BUFFERSIZE);

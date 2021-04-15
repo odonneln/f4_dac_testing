@@ -31,7 +31,7 @@
 #define MAX_ATTACK 0xff
 #define MAX_DECAY 0xff
 #define MAX_SUSTAIN 0xff
-#define MAX_RELEASE 0x01
+#define MAX_RELEASE 0xff
 #define MAX_RELEASE_NOTES 5
 
 // in seconds, no smaller than 1

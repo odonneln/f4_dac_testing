@@ -132,18 +132,19 @@ float get_multiplier(uint8_t note) {
 }
 
 void note_released(uint8_t note) {
+	release_capture[note] = 1.0;
 	notes_step[note] = 0;
 	notes_status[note] = OFF;
-	for(int i = MAX_RELEASE_NOTES-1; i >= 1; i--) {
+	for(int i = release_length-1; i >= 1; i--) {
 		released_notes[i]= released_notes[i-1];
 	}
-	release_capture[note] = get_multiplier(note);
 	released_notes[0] = note;
-	note_released_step[note] = 0;
+	notes_released_step[note] = 0;
+	if(++release_length > MAX_RELEASE_NOTES) release_length = MAX_RELEASE_NOTES;
 }
 
 uint8_t get_released_count() {
-	return released_length;
+	return release_length;
 }
 
 // yeah i know this is really bad. Time crunch though
@@ -162,6 +163,6 @@ float get_released_mult(uint8_t note) {
 		notes_released_step[note] = 0;
 		notes_finished++;
 	}
-
+	return mult;
 }
 
