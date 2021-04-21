@@ -54,8 +54,6 @@ DMA_HandleTypeDef hdma_spi2_tx;
 
 SPI_HandleTypeDef hspi1;
 
-UART_HandleTypeDef huart4;
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -66,7 +64,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_UART4_Init(void);
 //void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
@@ -109,12 +106,6 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 	full_complete();
-}
-
-void print(const char * c) {
-	uint8_t l = 0;
-	while (c[l++] != '\0');
-	HAL_UART_Transmit(&huart4, (uint8_t *) c, l, HAL_MAX_DELAY);
 }
 
 /*====================================================================================================*/
@@ -178,10 +169,8 @@ int main(void)
   MX_I2S2_Init();
   MX_SPI1_Init();
 //  MX_USB_HOST_Init();
-  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   //HAL_UART_Receive_DMA(&huart4, (uint8_t *)uart_rcv_buf, 1);
-  print("0\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -197,20 +186,18 @@ int main(void)
 
   init_note_steps();
   initializeParameters(
-		  0xff / 9, //attack
-		  0xff / 9, //decay
+		  0x01, //attack
+		  0x01, //decay
 		  0xff, //sustain = fraction of peak ampl the wave settles at after decay
 		  0x01 //release (leave as is for now)
 	);
 
   fill_buffer(buffer, BUFFERSIZE);
 
-  print("1\n");
 
   //HAL_SPI_Receive(&hspi1, (uint8_t *) wavetable, TABLESIZE);
   HAL_I2S_Transmit_DMA(&hi2s2, buffer, BUFFERSIZE);
 
-  print("2\n");
 
   /*## Init Host Library ################################################*/
   	if (USBH_Init(&hUSBHost, USBH_UserProcess_callback, HOST_FS) != USBH_OK)
@@ -225,6 +212,11 @@ int main(void)
   		Error_Handler();
 
   	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
+
+//  	add_note(0); //lowest key
+  	add_note(87); //highest key
+
+  	//add_note(48); // A0 = 440 Hz
 
   while (1)
   {
@@ -361,39 +353,6 @@ static void MX_SPI1_Init(void)
 }
 
 /**
-  * @brief UART4 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_UART4_Init(void)
-{
-
-  /* USER CODE BEGIN UART4_Init 0 */
-
-  /* USER CODE END UART4_Init 0 */
-
-  /* USER CODE BEGIN UART4_Init 1 */
-
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 115200;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
-
-  /* USER CODE END UART4_Init 2 */
-
-}
-
-/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -425,22 +384,22 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PA0 PA6 PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_6|GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA6 PA8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PD8 */
