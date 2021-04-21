@@ -32,7 +32,7 @@ extern char active_notes[10];
 extern int active_count;
 char msg[20];
 
-UART_HandleTypeDef huart4;
+//UART_HandleTypeDef h:art4;
 
 /* Private function prototypes -----------------------------------------------*/
 void ProcessReceivedMidiDatas(void);
@@ -75,6 +75,8 @@ void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost)
 
 void ProcessReceivedMidiDatas(void)
 {
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);
+
 	uint16_t numberOfPackets;
 	uint8_t *ptr = MIDI_RX_Buffer;
 	midi_package_t pack;

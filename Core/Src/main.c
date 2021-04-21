@@ -187,7 +187,7 @@ int main(void)
   init_note_steps();
   initializeParameters(
 		  0x01, //attack
-		  0x01, //decay
+		  0xff, //decay
 		  0xff, //sustain = fraction of peak ampl the wave settles at after decay
 		  0x01 //release (leave as is for now)
 	);
@@ -214,7 +214,7 @@ int main(void)
   	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
 
 //  	add_note(0); //lowest key
-  	add_note(87); //highest key
+//  	add_note(87); //highest key
 
   	//add_note(48); // A0 = 440 Hz
 
